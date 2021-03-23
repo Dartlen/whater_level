@@ -1,5 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="by.dartlen.whater_level">
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+
    <application
         android:label="whater_level"
         android:icon="@mipmap/ic_launcher">
