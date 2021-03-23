@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import "dart:math";
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -8,50 +10,35 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
       home: MainScreen(),
     );
   }
 }
 
-// class MyHomePage extends StatefulWidget {
-//   MyHomePage({Key key, this.title}) : super(key: key);
-//
-//   // This widget is the home page of your application. It is stateful, meaning
-//   // that it has a State object (defined below) that contains fields that affect
-//   // how it looks.
-//
-//   // This class is the configuration for the state. It holds the values (in this
-//   // case the title) provided by the parent (in this case the App widget) and
-//   // used by the build method of the State. Fields in a Widget subclass are
-//   // always marked "final".
-//
-//   final String title;
-//
-//   @override
-//   _MyHomePageState createState() => _MyHomePageState();
-// }
 /// This is the stateless widget that the main application instantiates.
 class MainScreen extends StatelessWidget {
-  final List<Color> colors = <Color>[Colors.red, Colors.blue, Colors.green, Colors.yellow, Colors.orange];
-  final data= ["one","two","three","four","five"];
-  var zz = createPost();
+  final List<Color> colors = <Color>[
+    Colors.red,
+    Colors.blue,
+    Colors.green,
+    Colors.yellow,
+    Colors.orange
+  ];
+  final data = ["one", "two", "three", "four", "five"];
+
+  final List<Post> namesPosts = [
+    Post(id: "0", name: "Полоцк", waterName: "Западная Двина"),
+    Post(id: "1", name: "Витебск", waterName: "Западная Двина"),
+    Post(id: "2", name: "Верхнедвинск", waterName: "Западная Двина"),
+    Post(id: "3", name: "Сураж", waterName: "Западная Двина"),
+    Post(id: "3", name: "Улла", waterName: "Западная Двина")
+  ];
+
+  //var zz = createPost();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,21 +47,107 @@ class MainScreen extends StatelessWidget {
       ),
       body: Center(
           child: ListView.builder(
-              itemCount: data.length,
+              itemCount: namesPosts.length,
               itemBuilder: (BuildContext context, int index) {
-                return Container(
-                  height: 150,
-                  color: colors[index],
-                  child: Center(child: Text('${data[index]}')),
-                );
-              }
-          )
-      ),
+                var post = namesPosts[index];
+                return ListTile(
+                    title: MessageItem(post.name, post.waterName)
+                        .buildTitle(context),
+                    subtitle: MessageItem(post.name, post.waterName)
+                        .buildSubtitle(context),
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Main(name: post.name),
+                      )),);
+              })),
     );
   }
 }
 
+class Main extends StatefulWidget {
+  final String name;
 
+  Main({Key key, @required this.name}) : super(key: key);
+
+  @override
+  PostScreen createState() => PostScreen();
+}
+
+class PostScreen extends State<Main> {
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Text('Flutter ListView Example'),
+        ),
+        body: Center(
+          child: FutureBuilder(
+                future: loadPost(),
+                builder: (context, AsyncSnapshot snapshot) {
+                  if (!snapshot.hasData) {
+                    return Center(child: CircularProgressIndicator());
+                  } else {
+                    return Container(
+                        child: ListView.builder(
+                            itemCount: snapshot.data.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              var pointDay = snapshot.data[index];
+                              return ListTile(
+                                  title: MessageItem(pointDay.date.toString(), pointDay.level).buildTitle(context));
+                            },
+                        ));
+                        // child: ListView.builder(
+                        //     itemCount: snapshot.data.length,
+                        //     scrollDirection: Axis.horizontal,
+                        //     itemBuilder: (BuildContext context, int index) {
+                        //       return Text('${snapshot.data[index]}');
+                        //     }));
+                  }
+                })
+        ));
+
+    // child: ListView.builder(
+    //     itemCount: pointDays.length,
+    //     itemBuilder: (BuildContext context, int index) {
+    //       var post = pointDays[index];
+    //       return ListTile(
+    //           title: MessageItem(post.name, post.waterName)
+    //               .buildTitle(context),
+    //           subtitle: MessageItem(post.name, post.waterName)
+    //               .buildSubtitle(context));
+    //     })),
+    // );
+  }
+}
+
+T getRandomElement<T>(List<T> list) {
+  final random = new Random();
+  var i = random.nextInt(list.length);
+  return list[i];
+}
+
+/// A ListItem that contains data to display a message.
+class MessageItem implements ListItem {
+  final String sender;
+  final String body;
+
+  MessageItem(this.sender, this.body);
+
+  Widget buildTitle(BuildContext context) => Text(sender);
+
+  Widget buildSubtitle(BuildContext context) => Text(body);
+}
+
+/// The base class for the different types of items the list can contain.
+abstract class ListItem {
+  /// The title line to show in a list item.
+  Widget buildTitle(BuildContext context);
+
+  /// The subtitle line, if any, to show in a list item.
+  Widget buildSubtitle(BuildContext context);
+}
 
 class Item {
   int color;
@@ -83,22 +156,21 @@ class Item {
   Item(this.color, this.field);
 }
 
-Future<List<Post>> createPost() async {
-  var queryParameters = {
-    'date': '15-03-2021'
-  };
+Future<List<PointDay>> loadPost() async {
+  var queryParameters = {'date': '15-03-2021'};
   final response = await http.get(
-    Uri.https('rivers-whater-level.herokuapp.com', '/api/v1/resources/post', queryParameters),
-    headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    }
-  );
+      Uri.https('rivers-whater-level.herokuapp.com', '/api/v1/resources/post',
+          queryParameters),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      });
 
   if (response.statusCode == 200) {
     // If the server did return a 201 CREATED response,
     // then parse the JSON.
     Iterable l = json.decode(response.body);
-    List<Post> posts = List<Post>.from(l.map((model) => Post.fromJson(model)));
+    List<PointDay> posts =
+    List<PointDay>.from(l.map((model) => PointDay.fromJson(model)));
     return posts;
     //return Post.fromJson(jsonDecode(response.body));
   } else {
@@ -109,17 +181,29 @@ Future<List<Post>> createPost() async {
 }
 
 class Post {
+  final String id;
+  final String name;
+  final String waterName;
+
+  Post({this.id, this.name, this.waterName});
+}
+
+class PointDay {
   final int id;
   final DateTime date;
   final String temp;
   final String level;
   final String delta;
 
-  Post({this.id, this.date, this.temp, this.level, this.delta});
+  PointDay({this.id, this.date, this.temp, this.level, this.delta});
 
-  factory Post.fromJson(json) {
-
-    return Post(id: json[0], date: HttpDate.parse(json[1]), temp: json[2], level: json[5], delta: json[3]);
+  factory PointDay.fromJson(json) {
+    return PointDay(
+        id: json[0],
+        date: HttpDate.parse(json[1]),
+        temp: json[2],
+        level: json[5],
+        delta: json[3]);
   }
 }
 
