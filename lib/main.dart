@@ -20,7 +20,18 @@ class MyApp extends StatelessWidget {
 }
 
 /// This is the stateless widget that the main application instantiates.
-class MainScreen extends StatelessWidget {
+class MainState extends State<MainScreen> {
+  TextEditingController _textController = TextEditingController();
+
+  onItemChanged(String value) {
+    setState(() {
+      newDataList = namesPosts
+          .where((item) => item.name.toLowerCase().contains(value.toLowerCase())
+          || item.waterName.toLowerCase().contains(value.toLowerCase()) )
+          .toList();
+    });
+  }
+
   final List<Color> colors = <Color>[
     Colors.red,
     Colors.blue,
@@ -30,7 +41,7 @@ class MainScreen extends StatelessWidget {
   ];
   final data = ["one", "two", "three", "four", "five"];
 
-  final List<Post> namesPosts = [
+  static List<Post> namesPosts = [
     Post(
         id: "0",
         name: "Полоцк",
@@ -63,79 +74,8 @@ class MainScreen extends StatelessWidget {
             PointDayInfoChanges(level: '285', temp: '10', delta: '0'))
   ];
 
+  List<Post> newDataList = List.from(namesPosts);
   //var zz = createPost();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Flutter ListView Example'),
-      ),
-      body: Center(
-          child: ListView.builder(
-              itemCount: namesPosts.length,
-              itemBuilder: (BuildContext context, int index) {
-                var post = namesPosts[index];
-                return Row(
-                  children: [
-                    Expanded(
-                        child: ListTile(
-                      title: MessageItem(post.name, post.waterName)
-                          .buildTitle(context),
-                      subtitle: MessageItem(post.name, post.waterName)
-                          .buildSubtitle(context),
-                      onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => Main(name: post.name),
-                          )),
-                    )),
-
-                    _getPointDayInfo(post.pointDayInfoChanges),
-
-                    // Expanded(
-                    //     child: Column(
-                    //   children: <Widget>[
-                    //     myLayoutWidget(),
-                    //     myLayoutWidget(),
-                    //   ],
-                    // ))
-                  ],
-                );
-                // return ListTile(
-                //     title: MessageItem(post.name, post.waterName)
-                //         .buildTitle(context),
-                //     subtitle: MessageItem(post.name, post.waterName)
-                //         .buildSubtitle(context),
-                //   onTap: () => Navigator.push(
-                //       context,
-                //       MaterialPageRoute(
-                //         builder: (context) => Main(name: post.name),
-                //       )),);
-              })),
-    );
-  }
-}
-
-class Main extends StatefulWidget {
-  final String name;
-
-  Main({Key key, @required this.name}) : super(key: key);
-
-  @override
-  PostScreen createState() => PostScreen();
-}
-
-class PostScreen extends State<Main> {
-  TextEditingController _textController = TextEditingController();
-
-  onItemChanged(String value) {
-    setState(() {
-      // newDataList = mainDataList
-      //     .where((string) => string.toLowerCase().contains(value.toLowerCase()))
-      //     .toList();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -143,19 +83,72 @@ class PostScreen extends State<Main> {
         appBar: AppBar(
           title: Text('Flutter ListView Example'),
         ),
-        body: Column(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: TextField(
-                controller: _textController,
-                decoration: InputDecoration(
-                  hintText: 'Search Here...',
-                ),
-                onChanged: onItemChanged,
+        body: Column(children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: TextField(
+              controller: _textController,
+              decoration: InputDecoration(
+                hintText: 'Search Here...',
               ),
+              onChanged: onItemChanged,
             ),
-            FutureBuilder(
+          ),
+          Expanded(
+              child: ListView.builder(
+                  itemCount: newDataList.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    var post = newDataList[index];
+                    return Row(
+                      children: [
+                        Expanded(
+                            child: ListTile(
+                          title: MessageItem(post.name, post.waterName)
+                              .buildTitle(context),
+                          subtitle: MessageItem(post.name, post.waterName)
+                              .buildSubtitle(context),
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    PostScreen(name: post.name),
+                              )),
+                        )),
+                        _getPointDayInfo(post.pointDayInfoChanges),
+                      ],
+                    );
+                  }))
+        ]));
+  }
+}
+
+class MainScreen extends StatefulWidget {
+  final String name;
+
+  MainScreen({Key key, @required this.name}) : super(key: key);
+
+  @override
+  MainState createState() => MainState();
+}
+
+class PostScreen extends StatefulWidget {
+  final String name;
+
+  PostScreen({Key key, @required this.name}) : super(key: key);
+
+  @override
+  PostState createState() => PostState();
+}
+
+class PostState extends State<PostScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Text('Flutter ListView Example'),
+        ),
+        body: Center(
+            child: FutureBuilder(
                 future: loadPost(),
                 builder: (context, AsyncSnapshot snapshot) {
                   if (!snapshot.hasData) {
@@ -173,9 +166,7 @@ class PostScreen extends State<Main> {
                       },
                     ));
                   }
-                })
-          ],
-        ));
+                })));
   }
 }
 
