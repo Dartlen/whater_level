@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import "dart:math";
 
+import 'package:ant_icons/ant_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -30,11 +31,36 @@ class MainScreen extends StatelessWidget {
   final data = ["one", "two", "three", "four", "five"];
 
   final List<Post> namesPosts = [
-    Post(id: "0", name: "Полоцк", waterName: "Западная Двина"),
-    Post(id: "1", name: "Витебск", waterName: "Западная Двина"),
-    Post(id: "2", name: "Верхнедвинск", waterName: "Западная Двина"),
-    Post(id: "3", name: "Сураж", waterName: "Западная Двина"),
-    Post(id: "3", name: "Улла", waterName: "Западная Двина")
+    Post(
+        id: "0",
+        name: "Полоцк",
+        waterName: "Западная Двина",
+        pointDayInfoChanges:
+            PointDayInfoChanges(level: '285', temp: '8', delta: '-25')),
+    Post(
+        id: "1",
+        name: "Витебск",
+        waterName: "Западная Двина",
+        pointDayInfoChanges:
+            PointDayInfoChanges(level: '285', temp: '9', delta: '+25')),
+    Post(
+        id: "2",
+        name: "Верхнедвинск",
+        waterName: "Западная Двина",
+        pointDayInfoChanges:
+            PointDayInfoChanges(level: '285', temp: '10', delta: '-2')),
+    Post(
+        id: "3",
+        name: "Сураж",
+        waterName: "Западная Двина",
+        pointDayInfoChanges:
+            PointDayInfoChanges(level: '285', temp: '9', delta: '+1')),
+    Post(
+        id: "4",
+        name: "Улла",
+        waterName: "Западная Двина",
+        pointDayInfoChanges:
+            PointDayInfoChanges(level: '285', temp: '10', delta: '0'))
   ];
 
   //var zz = createPost();
@@ -50,16 +76,42 @@ class MainScreen extends StatelessWidget {
               itemCount: namesPosts.length,
               itemBuilder: (BuildContext context, int index) {
                 var post = namesPosts[index];
-                return ListTile(
-                    title: MessageItem(post.name, post.waterName)
-                        .buildTitle(context),
-                    subtitle: MessageItem(post.name, post.waterName)
-                        .buildSubtitle(context),
-                  onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Main(name: post.name),
-                      )),);
+                return Row(
+                  children: [
+                    Expanded(
+                        child: ListTile(
+                      title: MessageItem(post.name, post.waterName)
+                          .buildTitle(context),
+                      subtitle: MessageItem(post.name, post.waterName)
+                          .buildSubtitle(context),
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => Main(name: post.name),
+                          )),
+                    )),
+
+                    _getPointDayInfo(post.pointDayInfoChanges),
+
+                    // Expanded(
+                    //     child: Column(
+                    //   children: <Widget>[
+                    //     myLayoutWidget(),
+                    //     myLayoutWidget(),
+                    //   ],
+                    // ))
+                  ],
+                );
+                // return ListTile(
+                //     title: MessageItem(post.name, post.waterName)
+                //         .buildTitle(context),
+                //     subtitle: MessageItem(post.name, post.waterName)
+                //         .buildSubtitle(context),
+                //   onTap: () => Navigator.push(
+                //       context,
+                //       MaterialPageRoute(
+                //         builder: (context) => Main(name: post.name),
+                //       )),);
               })),
     );
   }
@@ -75,6 +127,15 @@ class Main extends StatefulWidget {
 }
 
 class PostScreen extends State<Main> {
+  TextEditingController _textController = TextEditingController();
+
+  onItemChanged(String value) {
+    setState(() {
+      // newDataList = mainDataList
+      //     .where((string) => string.toLowerCase().contains(value.toLowerCase()))
+      //     .toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,8 +143,19 @@ class PostScreen extends State<Main> {
         appBar: AppBar(
           title: Text('Flutter ListView Example'),
         ),
-        body: Center(
-          child: FutureBuilder(
+        body: Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: TextField(
+                controller: _textController,
+                decoration: InputDecoration(
+                  hintText: 'Search Here...',
+                ),
+                onChanged: onItemChanged,
+              ),
+            ),
+            FutureBuilder(
                 future: loadPost(),
                 builder: (context, AsyncSnapshot snapshot) {
                   if (!snapshot.hasData) {
@@ -91,34 +163,19 @@ class PostScreen extends State<Main> {
                   } else {
                     return Container(
                         child: ListView.builder(
-                            itemCount: snapshot.data.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              var pointDay = snapshot.data[index];
-                              return ListTile(
-                                  title: MessageItem(pointDay.date.toString(), pointDay.level).buildTitle(context));
-                            },
-                        ));
-                        // child: ListView.builder(
-                        //     itemCount: snapshot.data.length,
-                        //     scrollDirection: Axis.horizontal,
-                        //     itemBuilder: (BuildContext context, int index) {
-                        //       return Text('${snapshot.data[index]}');
-                        //     }));
+                      itemCount: snapshot.data.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        var pointDay = snapshot.data[index];
+                        return ListTile(
+                            title: MessageItem(
+                                    pointDay.date.toString(), pointDay.level)
+                                .buildTitle(context));
+                      },
+                    ));
                   }
                 })
+          ],
         ));
-
-    // child: ListView.builder(
-    //     itemCount: pointDays.length,
-    //     itemBuilder: (BuildContext context, int index) {
-    //       var post = pointDays[index];
-    //       return ListTile(
-    //           title: MessageItem(post.name, post.waterName)
-    //               .buildTitle(context),
-    //           subtitle: MessageItem(post.name, post.waterName)
-    //               .buildSubtitle(context));
-    //     })),
-    // );
   }
 }
 
@@ -138,6 +195,75 @@ class MessageItem implements ListItem {
   Widget buildTitle(BuildContext context) => Text(sender);
 
   Widget buildSubtitle(BuildContext context) => Text(body);
+}
+
+Widget myLayoutWidget() {
+  return Align(
+    alignment: Alignment(0.9, 0),
+    child: Text("widget"),
+  );
+}
+
+Widget _getPointDayInfo(PointDayInfoChanges pointDayInfoChanges) {
+  Widget row;
+  MaterialColor color;
+  if (pointDayInfoChanges.delta.contains("+")) {
+    color = Colors.green;
+    row = rowTextWithPictureUpWater(pointDayInfoChanges.delta, color);
+    //changeTextWidget = new TextSpan(text: pointDayInfoChanges.delta, style: new TextStyle(color: Colors.green));
+  } else {
+    color = Colors.red;
+    row = rowTextWithPictureDownWater(pointDayInfoChanges.delta, color);
+    //changeTextWidget = new TextSpan(text: pointDayInfoChanges.delta, style: new TextStyle(color: Colors.red));
+  }
+
+  return Expanded(
+      child: Column(
+    children: <Widget>[
+      Align(
+        alignment: Alignment(1, 0),
+        child: Text(
+          pointDayInfoChanges.level,
+          style: TextStyle(color: Colors.indigo),
+        ),
+      ),
+      row,
+    ],
+  ));
+}
+
+Widget rowTextWithPictureDownWater(String text, Color color) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.end,
+    children: <Widget>[
+      Text(text, style: TextStyle(color: color)),
+      const Icon(
+        AntIcons.caret_down_outline,
+        color: Colors.red,
+      ),
+    ],
+  );
+}
+
+Widget rowTextWithPictureUpWater(String text, Color color) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.end,
+    children: <Widget>[
+      Text(text, style: TextStyle(color: color)),
+      const Icon(
+        AntIcons.caret_up_outline,
+        color: Colors.green,
+      ),
+    ],
+  );
+}
+
+class PointDayInfoChanges {
+  final String level;
+  final String temp;
+  final String delta;
+
+  PointDayInfoChanges({this.level, this.temp, this.delta});
 }
 
 /// The base class for the different types of items the list can contain.
@@ -170,7 +296,7 @@ Future<List<PointDay>> loadPost() async {
     // then parse the JSON.
     Iterable l = json.decode(response.body);
     List<PointDay> posts =
-    List<PointDay>.from(l.map((model) => PointDay.fromJson(model)));
+        List<PointDay>.from(l.map((model) => PointDay.fromJson(model)));
     return posts;
     //return Post.fromJson(jsonDecode(response.body));
   } else {
@@ -184,8 +310,9 @@ class Post {
   final String id;
   final String name;
   final String waterName;
+  final PointDayInfoChanges pointDayInfoChanges;
 
-  Post({this.id, this.name, this.waterName});
+  Post({this.id, this.name, this.waterName, this.pointDayInfoChanges});
 }
 
 class PointDay {
@@ -206,70 +333,3 @@ class PointDay {
         delta: json[3]);
   }
 }
-
-// class _MyHomePageState extends State<MyHomePage> {
-//   int _counter = 0;
-//
-//   void _incrementCounter() {
-//     setState(() {
-//       // This call to setState tells the Flutter framework that something has
-//       // changed in this State, which causes it to rerun the build method below
-//       // so that the display can reflect the updated values. If we changed
-//       // _counter without calling setState(), then the build method would not be
-//       // called again, and so nothing would appear to happen.
-//       _counter++;
-//     });
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     // This method is rerun every time setState is called, for instance as done
-//     // by the _incrementCounter method above.
-//     //
-//     // The Flutter framework has been optimized to make rerunning build methods
-//     // fast, so that you can just rebuild anything that needs updating rather
-//     // than having to individually change instances of widgets.
-//     return Scaffold(
-//       appBar: AppBar(
-//         // Here we take the value from the MyHomePage object that was created by
-//         // the App.build method, and use it to set our appbar title.
-//         title: Text(widget.title),
-//       ),
-//       body: Center(
-//         // Center is a layout widget. It takes a single child and positions it
-//         // in the middle of the parent.
-//         child: Column(
-//           // Column is also a layout widget. It takes a list of children and
-//           // arranges them vertically. By default, it sizes itself to fit its
-//           // children horizontally, and tries to be as tall as its parent.
-//           //
-//           // Invoke "debug painting" (press "p" in the console, choose the
-//           // "Toggle Debug Paint" action from the Flutter Inspector in Android
-//           // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-//           // to see the wireframe for each widget.
-//           //
-//           // Column has various properties to control how it sizes itself and
-//           // how it positions its children. Here we use mainAxisAlignment to
-//           // center the children vertically; the main axis here is the vertical
-//           // axis because Columns are vertical (the cross axis would be
-//           // horizontal).
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: <Widget>[
-//             Text(
-//               'You have pushed the button this many times:',
-//             ),
-//             Text(
-//               '$_counter',
-//               style: Theme.of(context).textTheme.headline4,
-//             ),
-//           ],
-//         ),
-//       ),
-//       floatingActionButton: FloatingActionButton(
-//         onPressed: _incrementCounter,
-//         tooltip: 'Increment',
-//         child: Icon(Icons.add),
-//       ), // This trailing comma makes auto-formatting nicer for build methods.
-//     );
-//   }
-// }
